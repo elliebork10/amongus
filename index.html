@@ -21,7 +21,8 @@
       margin: 0;
       padding: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      user-select: none; /* Prevents text selection while holding buttons */
+      user-select: none;
+      -webkit-user-select: none;
     }
 
     body {
@@ -77,6 +78,7 @@
       color: var(--text-color);
       font-size: 1rem;
       user-select: text;
+      -webkit-user-select: text;
     }
 
     input[type="number"] {
@@ -139,30 +141,59 @@
       gap: 10px;
     }
 
-    /* Hold Button with Loading Fill Animation */
+    /* Hold Button Styling */
     .player-btn {
-  position: relative;
-  padding: 18px 10px;
-  font-size: 1rem;
-  background-color: var(--bg-color);
-  border: 2px solid var(--royal-blue);
-  color: var(--text-color);
-  border-radius: 8px;
-  overflow: hidden;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent; /* Removes mobile tap flash */
-  outline: none;
-}
+      position: relative;
+      padding: 18px 10px;
+      font-size: 1rem;
+      background-color: var(--bg-color);
+      border: 2px solid var(--royal-blue);
+      color: var(--text-color);
+      border-radius: 8px;
+      overflow: hidden;
+      touch-action: manipulation;
+      outline: none;
+      -webkit-tap-highlight-color: transparent !important;
+      -webkit-touch-callout: none;
+    }
 
-.player-btn .fill {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
-  width: 0%;
-  background-color: var(--royal-blue); /* Solid royal blue fill */
-  opacity: 1;
-  pointer-events: none;
+    .player-btn:focus,
+    .player-btn:active,
+    .player-btn:focus-visible {
+      outline: none !important;
+      background-color: var(--bg-color) !important;
+      border-color: var(--royal-blue) !important;
+      box-shadow: none !important;
+    }
+
+    .player-btn .fill {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 0%;
+      background-color: var(--royal-blue);
+      opacity: 1;
+      pointer-events: none;
+    }
+
+    .player-btn .btn-text {
+      position: relative;
+      z-index: 1;
+    }
+
+    .player-btn.viewed {
+      opacity: 0.5;
+      border-color: var(--text-muted) !important;
+      background-color: #1a1a1a !important;
+      color: var(--text-muted);
+      cursor: not-allowed;
+    }
+
+    .player-btn.viewed:focus,
+    .player-btn.viewed:active {
+      background-color: #1a1a1a !important;
+      border-color: var(--text-muted) !important;
     }
 
     /* Modal Styling */
@@ -317,12 +348,10 @@
 </div>
 
 <script>
-  // Game State
   let players = [];
   let assignedRoles = {};
   let currentViewingPlayer = null;
 
-  // DOM Elements
   const homeView = document.getElementById('home-view');
   const playView = document.getElementById('play-view');
   const endView = document.getElementById('end-view');
@@ -344,7 +373,6 @@
   const imposterNames = document.getElementById('imposter-names');
   const closeModalBtn = document.getElementById('close-modal-btn');
 
-  // Load saved players from LocalStorage
   window.addEventListener('DOMContentLoaded', () => {
     const saved = localStorage.getItem('imposter_players');
     if (saved) {
@@ -357,7 +385,6 @@
     localStorage.setItem('imposter_players', JSON.stringify(players));
   }
 
-  // Add Player
   addPlayerBtn.addEventListener('click', () => {
     const name = playerNameInput.value.trim();
     if (name && !players.includes(name)) {
@@ -387,7 +414,6 @@
     });
   }
 
-  // Start Game
   startGameBtn.addEventListener('click', () => {
     const imposterCount = parseInt(document.getElementById('imposter-count').value) || 0;
     const jokerCount = parseInt(document.getElementById('joker-count').value) || 0;
@@ -406,7 +432,6 @@
       return;
     }
 
-    // Build Role Pool
     let rolePool = [];
     for (let i = 0; i < imposterCount; i++) rolePool.push('Imposter');
     for (let i = 0; i < jokerCount; i++) rolePool.push('Joker');
@@ -417,10 +442,8 @@
       rolePool.push('Crewmate');
     }
 
-    // Shuffle roles
     rolePool.sort(() => Math.random() - 0.5);
 
-    // Assign roles
     assignedRoles = {};
     players.forEach((player, index) => {
       assignedRoles[player] = rolePool[index];
@@ -440,63 +463,54 @@
       btn.id = `btn-${name}`;
       btn.innerHTML = `<div class="fill"></div><span class="btn-text">${name}</span>`;
 
-function setupHoldToView(btn, playerName) {
-  let animationFrameId = null;
-  let startTime = null;
-  const fillEl = btn.querySelector('.fill');
-  const holdDuration = 750; // 0.75 seconds
+      setupHoldToView(btn, name);
 
-  function step(timestamp) {
-    if (!startTime) startTime = timestamp;
-    const elapsed = timestamp - startTime;
-    const percentage = Math.min((elapsed / holdDuration) * 100, 100);
+      playerGrid.appendChild(btn);
+    });
+  }
 
-    fillEl.style.width = percentage + '%';
+  function setupHoldToView(btn, playerName) {
+    let animationFrameId = null;
+    let startTime = null;
+    const fillEl = btn.querySelector('.fill');
+    const holdDuration = 750; // 0.75 seconds
 
-    if (elapsed < holdDuration) {
-      animationFrameId = requestAnimationFrame(step);
-    } else {
+    function step(timestamp) {
+      if (!startTime) startTime = timestamp;
+      const elapsed = timestamp - startTime;
+      const percentage = Math.min((elapsed / holdDuration) * 100, 100);
+
+      fillEl.style.width = percentage + '%';
+
+      if (elapsed < holdDuration) {
+        animationFrameId = requestAnimationFrame(step);
+      } else {
+        fillEl.style.width = '0%';
+        showRole(playerName);
+      }
+    }
+
+    function startHold(e) {
+      if (btn.classList.contains('viewed')) return;
+      startTime = null;
       fillEl.style.width = '0%';
-      showRole(playerName);
-    }
-  }
-
-  function startHold(e) {
-    if (btn.classList.contains('viewed')) return;
-    startTime = null;
-    fillEl.style.width = '0%';
-    animationFrameId = requestAnimationFrame(step);
-  }
-
-  function cancelHold() {
-    if (animationFrameId) {
-      cancelAnimationFrame(animationFrameId);
-      animationFrameId = null;
-    }
-    fillEl.style.width = '0%';
-  }
-
-  // Event listeners for touch & mouse
-  btn.addEventListener('mousedown', startHold);
-  btn.addEventListener('mouseup', cancelHold);
-  btn.addEventListener('mouseleave', cancelHold);
-
-  btn.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    startHold();
-  });
-  btn.addEventListener('touchend', cancelHold);
-  btn.addEventListener('touchcancel', cancelHold);
-}
+      animationFrameId = requestAnimationFrame(step);
     }
 
-    // Event listeners for touch & mouse
+    function cancelHold() {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+      fillEl.style.width = '0%';
+    }
+
     btn.addEventListener('mousedown', startHold);
     btn.addEventListener('mouseup', cancelHold);
     btn.addEventListener('mouseleave', cancelHold);
 
     btn.addEventListener('touchstart', (e) => {
-      e.preventDefault(); // Prevents right-click popups on mobile
+      e.preventDefault();
       startHold();
     });
     btn.addEventListener('touchend', cancelHold);
@@ -509,7 +523,6 @@ function setupHoldToView(btn, playerName) {
     modalPlayerName.innerText = playerName;
     modalRole.innerText = role;
 
-    // Imposter check
     if (role === 'Imposter') {
       const fellowImposters = Object.keys(assignedRoles).filter(
         p => assignedRoles[p] === 'Imposter' && p !== playerName
@@ -528,7 +541,6 @@ function setupHoldToView(btn, playerName) {
     roleModal.style.display = 'flex';
   }
 
-  // Hide Modal & Permanently Disable Player's Button
   closeModalBtn.addEventListener('click', () => {
     roleModal.style.display = 'none';
 
@@ -542,7 +554,6 @@ function setupHoldToView(btn, playerName) {
     }
   });
 
-  // End Game & Show Summary
   endGameBtn.addEventListener('click', () => {
     summaryBody.innerHTML = '';
     players.forEach(p => {
@@ -555,7 +566,6 @@ function setupHoldToView(btn, playerName) {
     endView.classList.remove('hidden');
   });
 
-  // Return Home
   backHomeBtn.addEventListener('click', () => {
     endView.classList.add('hidden');
     homeView.classList.remove('hidden');
