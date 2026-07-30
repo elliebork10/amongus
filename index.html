@@ -1,0 +1,482 @@
+Here is a complete, single-file HTML, CSS, and JavaScript solution. You can copy this code, save it as index.html, and open it in any browser or host it online.
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Imposter IRL Role Generator</title>
+  <style>
+    :root {
+      --bg-color: #0d1117;
+      --card-bg: #161b22;
+      --royal-blue: #2563eb;
+      --royal-blue-hover: #1d4ed8;
+      --text-color: #ffffff;
+      --text-muted: #9ca3af;
+      --border-color: #30363d;
+      --danger: #dc2626;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 500px;
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    h1, h2 {
+      text-align: center;
+      color: var(--text-color);
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      border-bottom: 2px solid var(--royal-blue);
+      padding-bottom: 10px;
+    }
+
+    .section {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .input-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    input[type="text"], input[type="number"] {
+      flex: 1;
+      padding: 10px;
+      background: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-color);
+      font-size: 1rem;
+    }
+
+    input[type="number"] {
+      max-width: 80px;
+      text-align: center;
+    }
+
+    button {
+      padding: 10px 16px;
+      background-color: var(--royal-blue);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    button:hover {
+      background-color: var(--royal-blue-hover);
+    }
+
+    button.btn-danger {
+      background-color: var(--danger);
+    }
+
+    button.btn-danger:hover {
+      background-color: #b91c1c;
+    }
+
+    .player-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .player-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-color);
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+    }
+
+    .role-setting {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+    }
+
+    .player-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .player-btn {
+      padding: 15px;
+      font-size: 1rem;
+      background-color: var(--bg-color);
+      border: 1px solid var(--royal-blue);
+      color: var(--text-color);
+    }
+
+    .player-btn.viewed {
+      opacity: 0.5;
+      border-color: var(--border-color);
+    }
+
+    /* Modal Styling */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      z-index: 100;
+    }
+
+    .modal-content {
+      background: var(--card-bg);
+      border: 2px solid var(--royal-blue);
+      padding: 24px;
+      border-radius: 12px;
+      text-align: center;
+      max-width: 400px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .role-title {
+      font-size: 2rem;
+      color: var(--royal-blue);
+      font-weight: bold;
+    }
+
+    .imposter-list {
+      background: var(--bg-color);
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid var(--danger);
+      color: #f87171;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .reveal-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    .reveal-table th, .reveal-table td {
+      border: 1px solid var(--border-color);
+      padding: 10px;
+      text-align: left;
+    }
+
+    .reveal-table th {
+      background: var(--bg-color);
+      color: var(--royal-blue);
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  
+  <div id="home-view" class="section">
+    <h1>Imposter IRL</h1>
+    
+    <div>
+      <h3>Add Players</h3>
+      <div class="input-group" style="margin-top: 8px;">
+        <input type="text" id="player-name-input" placeholder="Enter player name...">
+        <button id="add-player-btn">Add</button>
+      </div>
+    </div>
+
+    <ul id="player-list" class="player-list"></ul>
+
+    <hr style="border-color: var(--border-color);">
+
+    <h3>Role Setup</h3>
+    
+    <div class="role-setting">
+      <label for="imposter-count">Imposters:</label>
+      <input type="number" id="imposter-count" value="1" min="1">
+    </div>
+
+    <div class="role-setting">
+      <label for="joker-count">Joker:</label>
+      <input type="number" id="joker-count" value="0" min="0">
+    </div>
+
+    <div class="role-setting">
+      <label for="doctor-count">Doctor:</label>
+      <input type="number" id="doctor-count" value="0" min="0">
+    </div>
+
+    <div class="role-setting">
+      <label for="detective-count">Detective:</label>
+      <input type="number" id="detective-count" value="0" min="0">
+    </div>
+
+    <button id="start-game-btn" style="margin-top: 10px; padding: 14px;">Start Game</button>
+  </div>
+
+  <div id="play-view" class="section hidden">
+    <h2>Pass the Phone</h2>
+    <p style="text-align: center; color: var(--text-muted);">Tap your name to see your secret role.</p>
+    
+    <div id="player-grid" class="player-grid"></div>
+
+    <button id="end-game-btn" class="btn-danger" style="margin-top: 20px;">Reveal All Roles & End</button>
+  </div>
+
+  <div id="end-view" class="section hidden">
+    <h2>Game Summary</h2>
+    <table class="reveal-table">
+      <thead>
+        <tr>
+          <th>Player</th>
+          <th>Role</th>
+        </tr>
+      </thead>
+      <tbody id="summary-body"></tbody>
+    </table>
+
+    <button id="back-home-btn" style="margin-top: 15px;">Back to Setup</button>
+  </div>
+
+</div>
+
+<div id="role-modal" class="modal">
+  <div class="modal-content">
+    <h3 id="modal-player-name">Player Name</h3>
+    <p style="color: var(--text-muted);">Your secret role is:</p>
+    <div id="modal-role" class="role-title">ROLE</div>
+    
+    <div id="imposter-info" class="imposter-list hidden">
+      <p style="font-weight: bold; margin-bottom: 5px;">Fellow Imposters:</p>
+      <div id="imposter-names"></div>
+    </div>
+
+    <button id="close-modal-btn" style="margin-top: 10px;">Hide & Pass Phone</button>
+  </div>
+</div>
+
+<script>
+  // Game State
+  let players = [];
+  let assignedRoles = {}; // { playerName: roleName }
+
+  // DOM Elements
+  const homeView = document.getElementById('home-view');
+  const playView = document.getElementById('play-view');
+  const endView = document.getElementById('end-view');
+  
+  const playerNameInput = document.getElementById('player-name-input');
+  const addPlayerBtn = document.getElementById('add-player-btn');
+  const playerListEl = document.getElementById('player-list');
+  const startGameBtn = document.getElementById('start-game-btn');
+  
+  const playerGrid = document.getElementById('player-grid');
+  const endGameBtn = document.getElementById('end-game-btn');
+  const summaryBody = document.getElementById('summary-body');
+  const backHomeBtn = document.getElementById('back-home-btn');
+
+  const roleModal = document.getElementById('role-modal');
+  const modalPlayerName = document.getElementById('modal-player-name');
+  const modalRole = document.getElementById('modal-role');
+  const imposterInfo = document.getElementById('imposter-info');
+  const imposterNames = document.getElementById('imposter-names');
+  const closeModalBtn = document.getElementById('close-modal-btn');
+
+  // Load saved players from LocalStorage
+  window.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('imposter_players');
+    if (saved) {
+      players = JSON.parse(saved);
+      renderPlayerList();
+    }
+  });
+
+  function savePlayers() {
+    localStorage.setItem('imposter_players', JSON.stringify(players));
+  }
+
+  // Add Player
+  addPlayerBtn.addEventListener('click', () => {
+    const name = playerNameInput.value.trim();
+    if (name && !players.includes(name)) {
+      players.push(name);
+      playerNameInput.value = '';
+      savePlayers();
+      renderPlayerList();
+    }
+  });
+
+  function removePlayer(name) {
+    players = players.filter(p => p !== name);
+    savePlayers();
+    renderPlayerList();
+  }
+
+  function renderPlayerList() {
+    playerListEl.innerHTML = '';
+    players.forEach(name => {
+      const li = document.createElement('li');
+      li.className = 'player-item';
+      li.innerHTML = `
+        <span>${name}</span>
+        <button class="btn-danger" style="padding: 4px 8px; font-size: 0.8rem;" onclick="removePlayer('${name}')">X</button>
+      `;
+      playerListEl.appendChild(li);
+    });
+  }
+
+  // Start Game
+  startGameBtn.addEventListener('click', () => {
+    const imposterCount = parseInt(document.getElementById('imposter-count').value) || 0;
+    const jokerCount = parseInt(document.getElementById('joker-count').value) || 0;
+    const doctorCount = parseInt(document.getElementById('doctor-count').value) || 0;
+    const detectiveCount = parseInt(document.getElementById('detective-count').value) || 0;
+
+    const totalSpecial = imposterCount + jokerCount + doctorCount + detectiveCount;
+
+    if (players.length < 3) {
+      alert('Please add at least 3 players!');
+      return;
+    }
+
+    if (totalSpecial > players.length) {
+      alert('Total assigned roles exceed total number of players!');
+      return;
+    }
+
+    // Build Role Pool
+    let rolePool = [];
+    for (let i = 0; i < imposterCount; i++) rolePool.push('Imposter');
+    for (let i = 0; i < jokerCount; i++) rolePool.push('Joker');
+    for (let i = 0; i < doctorCount; i++) rolePool.push('Doctor');
+    for (let i = 0; i < detectiveCount; i++) rolePool.push('Detective');
+    
+    while (rolePool.length < players.length) {
+      rolePool.push('Crewmate');
+    }
+
+    // Shuffle roles
+    rolePool.sort(() => Math.random() - 0.5);
+
+    // Assign roles
+    assignedRoles = {};
+    players.forEach((player, index) => {
+      assignedRoles[player] = rolePool[index];
+    });
+
+    // Render Play Grid
+    renderPlayGrid();
+
+    // Switch Views
+    homeView.classList.add('hidden');
+    playView.classList.remove('hidden');
+  });
+
+  function renderPlayGrid() {
+    playerGrid.innerHTML = '';
+    players.forEach(name => {
+      const btn = document.createElement('button');
+      btn.className = 'player-btn';
+      btn.innerText = name;
+      btn.onclick = () => showRole(name, btn);
+      playerGrid.appendChild(btn);
+    });
+  }
+
+  function showRole(playerName, btnElement) {
+    const role = assignedRoles[playerName];
+    modalPlayerName.innerText = playerName;
+    modalRole.innerText = role;
+
+    // Imposter check
+    if (role === 'Imposter') {
+      const fellowImposters = Object.keys(assignedRoles).filter(
+        p => assignedRoles[p] === 'Imposter' && p !== playerName
+      );
+
+      if (fellowImposters.length > 0) {
+        imposterNames.innerText = fellowImposters.join(', ');
+      } else {
+        imposterNames.innerText = 'You are the solo Imposter!';
+      }
+      imposterInfo.classList.remove('hidden');
+    } else {
+      imposterInfo.classList.add('hidden');
+    }
+
+    btnElement.classList.add('viewed');
+    roleModal.style.display = 'flex';
+  }
+
+  closeModalBtn.addEventListener('click', () => {
+    roleModal.style.display = 'none';
+  });
+
+  // End Game & Show Summary
+  endGameBtn.addEventListener('click', () => {
+    summaryBody.innerHTML = '';
+    players.forEach(p => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${p}</td><td><strong>${assignedRoles[p]}</strong></td>`;
+      summaryBody.appendChild(tr);
+    });
+
+    playView.classList.add('hidden');
+    endView.classList.remove('hidden');
+  });
+
+  // Return Home
+  backHomeBtn.addEventListener('click', () => {
+    endView.classList.add('hidden');
+    homeView.classList.remove('hidden');
+  });
+</script>
+
+</body>
+</html>
+
