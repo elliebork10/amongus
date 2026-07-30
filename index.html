@@ -162,7 +162,6 @@
   width: 0%;
   background-color: var(--royal-blue); /* Solid royal blue fill */
   opacity: 1;
-  transition: width 0.05s linear;
   pointer-events: none;
     }
 
@@ -441,43 +440,54 @@
       btn.id = `btn-${name}`;
       btn.innerHTML = `<div class="fill"></div><span class="btn-text">${name}</span>`;
 
-      // Setup 3-second hold logic
-      setupHoldToView(btn, name);
+function setupHoldToView(btn, playerName) {
+  let animationFrameId = null;
+  let startTime = null;
+  const fillEl = btn.querySelector('.fill');
+  const holdDuration = 750; // 0.75 seconds
 
-      playerGrid.appendChild(btn);
-    });
+  function step(timestamp) {
+    if (!startTime) startTime = timestamp;
+    const elapsed = timestamp - startTime;
+    const percentage = Math.min((elapsed / holdDuration) * 100, 100);
+
+    fillEl.style.width = percentage + '%';
+
+    if (elapsed < holdDuration) {
+      animationFrameId = requestAnimationFrame(step);
+    } else {
+      fillEl.style.width = '0%';
+      showRole(playerName);
+    }
   }
 
-  function setupHoldToView(btn, playerName) {
-    let timer = null;
-    let progress = 0;
-    let interval = null;
-    const fillEl = btn.querySelector('.fill');
-    const holdDuration = 750; // .75 seconds
-    const updateRate = 50; // update fill every 50ms
+  function startHold(e) {
+    if (btn.classList.contains('viewed')) return;
+    startTime = null;
+    fillEl.style.width = '0%';
+    animationFrameId = requestAnimationFrame(step);
+  }
 
-    function startHold(e) {
-      if (btn.classList.contains('viewed')) return;
-
-      progress = 0;
-      fillEl.style.width = '0%';
-
-      interval = setInterval(() => {
-        progress += updateRate;
-        let percentage = (progress / holdDuration) * 100;
-        fillEl.style.width = percentage + '%';
-
-        if (progress >= holdDuration) {
-          clearInterval(interval);
-          fillEl.style.width = '0%';
-          showRole(playerName);
-        }
-      }, updateRate);
+  function cancelHold() {
+    if (animationFrameId) {
+      cancelAnimationFrame(animationFrameId);
+      animationFrameId = null;
     }
+    fillEl.style.width = '0%';
+  }
 
-    function cancelHold() {
-      if (interval) clearInterval(interval);
-      fillEl.style.width = '0%';
+  // Event listeners for touch & mouse
+  btn.addEventListener('mousedown', startHold);
+  btn.addEventListener('mouseup', cancelHold);
+  btn.addEventListener('mouseleave', cancelHold);
+
+  btn.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    startHold();
+  });
+  btn.addEventListener('touchend', cancelHold);
+  btn.addEventListener('touchcancel', cancelHold);
+}
     }
 
     // Event listeners for touch & mouse
